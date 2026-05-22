@@ -1,0 +1,281 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SmartShelf - Serverless Food Expiry Tracker
+
+Parameters:
+  AlertEmail:
+    Type: String
+    Description: Email address to receive expiry alerts
+    Default: your@email.com
+
+Resources:
+
+  # DynamoDB Table
+  SmartShelfTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: SmartShelfItems
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # SNS Topic
+  SmartShelfAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: smartshelf-alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+
+  # IAM Role for Lambda
+  SmartShelfLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: smartshelf-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+  # Lambda - Add Item
+  AddItemFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: smartshelf-add-item
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt SmartShelfLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import uuid
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('SmartShelfItems')
+
+          def lambda_handler(event, context):
+              try:
+                  body = json.loads(event['body'])
+                  item = {
+                      'id': str(uuid.uuid4()),
+                      'name': body['name'],
+                      'category': body['category'],
+                      'expiryDate': body['expiryDate'],
+                      'createdAt': datetime.utcnow().isoformat()
+                  }
+                  table.put_item(Item=item)
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                      'body': json.dumps({'message': 'Item added', 'item': item})
+                  }
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # Lambda - Get Items
+  GetItemsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: smartshelf-get-items
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt SmartShelfLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('SmartShelfItems')
+
+          def lambda_handler(event, context):
+              try:
+                  response = table.scan()
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                      'body': json.dumps({'items': response['Items']})
+                  }
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # Lambda - Check Expiry
+  CheckExpiryFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: smartshelf-check-expiry
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt SmartShelfLambdaRole.Arn
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SmartShelfAlertTopic
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+
+          dynamodb = boto3.resource('dynamodb')
+          sns = boto3.client('sns', region_name='us-west-2')
+          table = dynamodb.Table('SmartShelfItems')
+
+          def lambda_handler(event, context):
+              try:
+                  today = datetime.utcnow().date()
+                  soon = today + timedelta(days=3)
+                  response = table.scan()
+                  items = response['Items']
+                  expiring = []
+                  expired = []
+                  for item in items:
+                      expiry = datetime.strptime(item['expiryDate'], '%Y-%m-%d').date()
+                      if expiry < today:
+                          expired.append(item)
+                      elif expiry <= soon:
+                          expiring.append(item)
+                  if expiring or expired:
+                      message = "SmartShelf Daily Report\n\n"
+                      message += f"Expiring within 3 days ({len(expiring)} items):\n"
+                      for item in expiring:
+                          message += f"  - {item['name']} (expires {item['expiryDate']})\n"
+                      message += f"\nAlready expired ({len(expired)} items):\n"
+                      for item in expired:
+                          message += f"  - {item['name']} (expired {item['expiryDate']})\n"
+                      sns.publish(
+                          TopicArn=os.environ['SNS_TOPIC_ARN'],
+                          Subject='SmartShelf - Items Need Attention',
+                          Message=message
+                      )
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({'expiring': len(expiring), 'expired': len(expired)})
+                  }
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # API Gateway
+  SmartShelfApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: smartshelf-api
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - '*'
+
+  # API Gateway Integrations
+  AddItemIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SmartShelfApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/${AddItemFunction.Arn}/invocations
+      PayloadFormatVersion: '2.0'
+
+  GetItemsIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SmartShelfApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/${GetItemsFunction.Arn}/invocations
+      PayloadFormatVersion: '2.0'
+
+  # API Gateway Routes
+  PostItemsRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SmartShelfApi
+      RouteKey: POST /items
+      Target: !Sub integrations/${AddItemIntegration}
+
+  GetItemsRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SmartShelfApi
+      RouteKey: GET /items
+      Target: !Sub integrations/${GetItemsIntegration}
+
+  # API Gateway Stage
+  ApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref SmartShelfApi
+      StageName: $default
+      AutoDeploy: true
+
+  # EventBridge Scheduler Role
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambda
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt CheckExpiryFunction.Arn
+
+  # EventBridge Schedule
+  DailyExpiryCheck:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: smartshelf-daily-check
+      ScheduleExpression: cron(0 8 * * ? *)
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt CheckExpiryFunction.Arn
+        RoleArn: !GetAtt SchedulerRole.Arn
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway URL
+    Value: !Sub https://${SmartShelfApi}.execute-api.us-west-2.amazonaws.com
+
+  DynamoDBTable:
+    Description: DynamoDB Table Name
+    Value: !Ref SmartShelfTable
+
+  SNSTopic:
+    Description: SNS Topic ARN
+    Value: !Ref SmartShelfAlertTopic

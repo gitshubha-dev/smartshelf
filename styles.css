@@ -1,0 +1,684 @@
+/* ─────────────────────────────────────────────
+   SMARTSHELF — styles.css
+   Mobile-first. Breakpoints: 480px, 640px
+───────────────────────────────────────────── */
+
+/* ── Reset & variables ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:           #F7F5F0;
+  --surface:      #FFFFFF;
+  --border:       #E2DDD4;
+  --text:         #1A1A18;
+  --muted:        #6B6860;
+  --accent:       #2D6A4F;
+  --accent-light: #D8EDDF;
+  --accent-mid:   #52B788;
+  --accent-dark:  #245a41;
+  --warn:         #E76F51;
+  --warn-light:   #FAE9E4;
+  --danger:       #C1121F;
+  --danger-light: #FDECEA;
+  --ok-light:     #D8EDDF;
+  --blue:         #1E40AF;
+  --blue-dark:    #1e3a8a;
+  --blue-light:   #EFF6FF;
+  --blue-border:  #BFDBFE;
+  --blue-disabled:#93C5FD;
+
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+
+  --radius:    10px;
+  --radius-sm: 6px;
+
+  /* Touch targets: minimum 44px per WCAG */
+  --touch-min: 44px;
+}
+
+
+/* ── Base ── */
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  /* Generous side padding on mobile, more on desktop */
+  padding: 1.25rem 1rem 5rem;
+  /* Prevent horizontal overflow on narrow phones */
+  overflow-x: hidden;
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  /* Ensure children can't exceed viewport width */
+  width: 100%;
+}
+
+
+/* ── Header ── */
+header {
+  margin-bottom: 1rem;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.3px;
+}
+
+.tagline {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+
+/* ── Top grid: 3 stats + AI tile ── */
+/* Mobile: 2×2 grid */
+.top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  min-width: 0; /* prevent grid blowout */
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.stat-value.warn   { color: var(--warn); }
+.stat-value.danger { color: var(--danger); }
+
+/* AI tile sits in the 4th grid cell */
+.ai-tile {
+  background: var(--blue-light);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ai-tile-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--blue);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.ai-tile-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  /* Tall enough for thumbs */
+  padding: 10px 10px;
+  min-height: var(--touch-min);
+  cursor: pointer;
+  text-align: center;
+  transition: background .15s, transform .1s;
+  /* Prevent text overflow on small tiles */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-tile-btn:hover    { background: var(--blue-dark); }
+.ai-tile-btn:active   { transform: scale(0.97); }
+.ai-tile-btn:disabled { background: var(--blue-disabled); cursor: not-allowed; transform: none; }
+
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Tighter on mobile, generous on desktop */
+  padding: 1rem 1rem;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-bottom: .75rem;
+}
+
+
+/* ── Add item form ── */
+/* Mobile: single column stack */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+input[type="text"],
+input[type="date"],
+select {
+  font-family: var(--font-body);
+  /* 16px prevents iOS auto-zoom on focus */
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  /* Tall enough for touch */
+  padding: 11px 12px;
+  min-height: var(--touch-min);
+  width: 100%;
+  outline: none;
+  transition: border-color .15s;
+  /* Prevent appearance differences on iOS */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Restore select chevron lost by appearance:none */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6860' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent-mid);
+  background: #fff;
+}
+
+.btn-primary {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  min-height: var(--touch-min);
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  /* Full width on mobile, auto on desktop */
+  width: 100%;
+}
+
+.btn-primary:hover  { background: var(--accent-dark); }
+.btn-primary:active { transform: scale(0.98); }
+
+
+/* ── Shelf filters ── */
+.filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: .875rem;
+}
+
+.filter-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 13px;
+  min-height: var(--touch-min);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  /* Don't shrink on very small screens */
+  white-space: nowrap;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.empty-state .icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+
+/* ── Shelf table ── */
+/* Scrollable wrapper prevents overflow on narrow screens */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -1rem; /* bleed to card edge */
+  padding: 0 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  /* Prevent table from collapsing below content width */
+  min-width: 340px;
+}
+
+thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  padding: 0 8px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover      { background: var(--bg); }
+
+tbody td {
+  padding: 12px 8px;
+  vertical-align: middle;
+}
+
+.item-name { font-weight: 500; }
+
+/* Category column hidden on phones to save space */
+.col-cat { display: none; }
+
+.item-cat {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 999px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.cat-dairy   { background: #EEF2FF; color: #3730A3; }
+.cat-produce { background: var(--ok-light); color: var(--accent); }
+.cat-meat    { background: var(--warn-light); color: #B94A2C; }
+.cat-frozen  { background: #E0F2FE; color: #0369A1; }
+.cat-pantry  { background: #FEF9C3; color: #854D0E; }
+.cat-other   { background: #F3F4F6; color: #374151; }
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-ok      { background: var(--ok-light);    color: var(--accent); }
+.badge-soon    { background: var(--warn-light);   color: var(--warn); }
+.badge-expired { background: var(--danger-light); color: var(--danger); }
+.badge-today   { background: #FEF9C3;             color: #854D0E; }
+
+.days-text {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Delete button — big enough to tap */
+.del-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 6px;
+  min-height: var(--touch-min);
+  border-radius: 4px;
+  transition: all .1s;
+  white-space: nowrap;
+}
+
+.del-btn:hover  { background: var(--danger-light); color: var(--danger); }
+.del-btn:active { transform: scale(0.95); }
+
+
+/* ── Recipe panel ── */
+.recipe-panel {
+  background: var(--surface);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.recipe-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  cursor: pointer;
+  transition: background .15s;
+  user-select: none;
+  /* Touch-friendly height */
+  min-height: var(--touch-min);
+  gap: 12px;
+}
+
+.recipe-summary:hover { background: var(--blue-light); }
+
+.recipe-summary-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--blue);
+}
+
+.recipe-summary-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.recipe-chevron {
+  font-size: 14px;
+  color: var(--blue);
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+
+.recipe-chevron.open { transform: rotate(180deg); }
+
+.recipe-body {
+  border-top: 1px solid var(--blue-border);
+  display: none;
+}
+
+.recipe-body.open { display: block; }
+
+/* Streaming text area */
+.recipe-stream {
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  /* Prevent long words/URLs overflowing */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 13px;
+  background: var(--accent);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: blink .8s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Parsed recipe tabs */
+.recipe-tabs          { display: none; }
+.recipe-tabs.ready    { display: block; }
+
+.tab-bar {
+  display: flex;
+  background: #F8FAFF;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--blue-border);
+  /* Scroll horizontally if many recipe tabs */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Hide scrollbar visually but keep functionality */
+  scrollbar-width: none;
+}
+
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 11px 14px;
+  min-height: var(--touch-min);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tab-btn.active              { color: var(--blue); border-bottom-color: var(--blue); }
+.tab-btn:hover:not(.active)  { color: var(--text); }
+
+.tab-pane        { display: none; padding: 14px 16px; }
+.tab-pane.active { display: block; }
+
+.recipe-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.recipe-uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.recipe-uses span {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--warn-light);
+  color: var(--warn);
+}
+
+.recipe-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-steps li {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.step-num {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.recipe-meta {
+  padding: 8px 16px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+
+/* ── Footer notice ── */
+.api-notice {
+  background: var(--blue-light);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius);
+  padding: .875rem 1rem;
+  font-size: 13px;
+  color: var(--blue);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+
+/* ─────────────────────────────────────────────
+   BREAKPOINT: 480px — mid-size phones
+───────────────────────────────────────────── */
+@media (min-width: 480px) {
+  body {
+    padding: 1.5rem 1.25rem 5rem;
+  }
+
+  /* 4 columns once there's enough room */
+  .top-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* 2-col form: name + category side by side, date full width, button full width */
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Date field and button span both columns */
+  .field:nth-child(3) { grid-column: 1 / -1; }
+  .btn-add            { grid-column: 1 / -1; }
+
+  /* Show the category column in the table */
+  .col-cat { display: table-cell; }
+
+  input[type="text"],
+  input[type="date"],
+  select {
+    font-size: 14px;
+  }
+}
+
+
+/* ─────────────────────────────────────────────
+   BREAKPOINT: 600px — larger phones / tablets
+───────────────────────────────────────────── */
+@media (min-width: 600px) {
+  body {
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  h1 { font-size: 24px; }
+
+  .card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  /* Full form in one row */
+  .form-grid {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+  }
+
+  /* Reset the overrides from 480px */
+  .field:nth-child(3) { grid-column: auto; }
+  .btn-add {
+    grid-column: auto;
+    width: auto;
+    align-self: end;
+  }
+}
